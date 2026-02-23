@@ -9,7 +9,7 @@ import os
 # MODEL LADEN
 # -----------------------
 np.set_printoptions(suppress=True)
-model = load_model("keras_Model.h5", compile=False)
+model = load_model("keras_model.h5", compile=False)
 class_names = open("labels.txt", "r").readlines()
 
 # -----------------------
