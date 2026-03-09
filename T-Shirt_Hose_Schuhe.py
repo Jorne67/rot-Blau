@@ -5,11 +5,8 @@ from PIL import Image, ImageOps
 from supabase import create_client
 import uuid
 
-# -----------------------
-# SUPABASE CONFIG
-# -----------------------
-SUPABASE_URL = "DEINE_PROJECT_URL"
-SUPABASE_KEY = "DEIN_ANON_KEY"
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
