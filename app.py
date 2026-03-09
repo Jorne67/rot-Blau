@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 from keras.models import load_model
 from PIL import Image, ImageOps
-from supabase import create_client, ClientOptions
+from supabase import create_client
 import uuid
 
 # -----------------------
@@ -11,9 +11,7 @@ import uuid
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
-# Optionen: Auth wird nicht initialisiert, nur Storage/Table
-options = ClientOptions(auto_refresh_token=False, persist_session=False)
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=options)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 BUCKET_NAME = "clothes-images"
 
