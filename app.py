@@ -57,8 +57,7 @@ def upload_image(uploaded_file):
     try:
         supabase.storage.from_(BUCKET_NAME).upload(
             file_name,
-            uploaded_file.getvalue(),
-            content_type="image/jpeg"
+            uploaded_file.getvalue()  # nur Dateiinhalt, kein content_type
         )
     except Exception as e:
         st.error(f"Fehler beim Upload: {e}")
