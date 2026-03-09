@@ -70,7 +70,7 @@ st.title("👕 Lost & Found Clothes")
 
 option = st.radio(
     "Was möchtest du tun?",
-    ["Kleidungsstück melden", "Fundstück suchen"]
+    ["Kleidungsstück melden", "Fundstück suchen", "Alle Fundstücke anzeigen"]
 )
 
 # -----------------------
@@ -133,3 +133,21 @@ elif option == "Fundstück suchen":
                 st.warning("Keine passenden Einträge gefunden.")
         except Exception as e:
             st.error(f"Fehler beim Abrufen aus Supabase: {e}")
+
+# -----------------------
+# ALLE FUNDSTÜCKE ANZEIGEN
+# -----------------------
+elif option == "Alle Fundstücke anzeigen":
+    try:
+        response = supabase.table("clothes").select("class_name,image_url").execute()
+        all_items = response.data
+
+        if all_items:
+            st.subheader(f"Alle Fundstücke ({len(all_items)})")
+            for item in all_items:
+                st.write(f"**{item['class_name']}**")
+                st.image(item["image_url"], width=200)
+        else:
+            st.info("Es wurden noch keine Fundstücke hochgeladen.")
+    except Exception as e:
+        st.error(f"Fehler beim Abrufen aller Fundstücke: {e}")
