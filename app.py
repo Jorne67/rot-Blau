@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 from keras.models import load_model
 from PIL import Image, ImageOps
-from supabase import create_client
+from supabase import create_client, ClientOptions
 import uuid
 
 # -----------------------
@@ -11,7 +11,10 @@ import uuid
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# Optionen: Auth wird nicht initialisiert, nur Storage/Table
+options = ClientOptions(auto_refresh_token=False, persist_session=False)
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=options)
+
 BUCKET_NAME = "clothes-images"
 
 # -----------------------
@@ -59,7 +62,6 @@ def upload_image(uploaded_file):
         st.error(f"Fehler beim Upload: {e}")
         return None
 
-    # get_public_url gibt ein Dict zurück
     image_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)["publicUrl"]
     return image_url
 
@@ -94,7 +96,7 @@ if option == "Kleidungsstück melden":
             image_url = upload_image(uploaded_file)
             if image_url:
                 try:
-                    response = supabase.table("clothes").insert({
+                    supabase.table("clothes").insert({
                         "class_name": class_name,
                         "image_url": image_url
                     }).execute(throw_on_error=True)
