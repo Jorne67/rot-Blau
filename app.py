@@ -57,13 +57,14 @@ def upload_image(uploaded_file):
     try:
         supabase.storage.from_(BUCKET_NAME).upload(
             file_name,
-            uploaded_file.getvalue()  # nur Dateiinhalt, kein content_type
+            uploaded_file.getvalue()  # content_type weglassen
         )
     except Exception as e:
         st.error(f"Fehler beim Upload: {e}")
         return None
 
-    image_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)["publicUrl"]
+    # get_public_url gibt direkt den URL-String zurück
+    image_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)
     return image_url
 
 # -----------------------
