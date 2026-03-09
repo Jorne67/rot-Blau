@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 from keras.models import load_model
 from PIL import Image, ImageOps
-from supabase import create_client, ClientOptions
+from supabase import create_client
 import uuid
 
 # -----------------------
@@ -10,10 +10,6 @@ import uuid
 # -----------------------
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-
-
-options = ClientOptions(auto_refresh_token=False, persist_session=False)
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY, options=options)
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -63,7 +59,7 @@ def upload_image(uploaded_file):
         st.error(f"Fehler beim Upload: {e}")
         return None
 
-    # get_public_url gibt direkt den URL-String zurück
+    # get_public_url gibt direkt einen String zurück
     image_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)
     return image_url
 
@@ -88,7 +84,7 @@ if option == "Kleidungsstück melden":
 
     if uploaded_file:
         image = Image.open(uploaded_file).convert("RGB")
-        st.image(image, caption="Hochgeladenes Bild", use_column_width=True)
+        st.image(image, caption="Hochgeladenes Bild", width=600)
 
         class_name, confidence = predict(image)
         st.success(f"Erkannt als: {class_name}")
@@ -101,7 +97,7 @@ if option == "Kleidungsstück melden":
                     supabase.table("clothes").insert({
                         "class_name": class_name,
                         "image_url": image_url
-                    }).execute(throw_on_error=True)
+                    }).execute()  # kein throw_on_error
                     st.success("Fundstück gespeichert!")
                 except Exception as e:
                     st.error(f"Fehler beim Speichern in Supabase: {e}")
@@ -117,7 +113,7 @@ elif option == "Fundstück suchen":
 
     if uploaded_file:
         image = Image.open(uploaded_file).convert("RGB")
-        st.image(image, caption="Fundstück", use_column_width=True)
+        st.image(image, caption="Fundstück", width=600)
 
         class_name, confidence = predict(image)
         st.info(f"Erkannt als: {class_name}")
@@ -126,7 +122,7 @@ elif option == "Fundstück suchen":
             response = supabase.table("clothes") \
                 .select("image_url") \
                 .eq("class_name", class_name) \
-                .execute(throw_on_error=True)
+                .execute()  # kein throw_on_error
             results = response.data
 
             if results:
