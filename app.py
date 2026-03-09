@@ -19,7 +19,7 @@ BUCKET_NAME = "clothes-images"
 # -----------------------
 np.set_printoptions(suppress=True)
 model = load_model("keras_model.h5", compile=False)
-class_names = open("labels.txt", "r").readlines()
+class_names = [line.strip() for line in open("labels.txt", "r").readlines()]
 
 # -----------------------
 # BILD VORBEREITEN
@@ -40,7 +40,7 @@ def predict(image):
     data = prepare_image(image)
     prediction = model.predict(data)
     index = np.argmax(prediction)
-    class_name = class_names[index][2:].strip()
+    class_name = class_names[index]
     confidence_score = prediction[0][index]
     return class_name, confidence_score
 
@@ -49,11 +49,18 @@ def predict(image):
 # -----------------------
 def upload_image(uploaded_file):
     file_name = f"{uuid.uuid4()}.jpg"
-    supabase.storage.from_(BUCKET_NAME).upload(
-        file_name,
-        uploaded_file.getvalue()
-    )
-    image_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)
+    try:
+        supabase.storage.from_(BUCKET_NAME).upload(
+            file_name,
+            uploaded_file.getvalue(),
+            content_type="image/jpeg"
+        )
+    except Exception as e:
+        st.error(f"Fehler beim Upload: {e}")
+        return None
+
+    # get_public_url gibt ein Dict zurück
+    image_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)["publicUrl"]
     return image_url
 
 # -----------------------
@@ -85,11 +92,15 @@ if option == "Kleidungsstück melden":
 
         if st.button("Speichern"):
             image_url = upload_image(uploaded_file)
-            supabase.table("clothes").insert({
-                "class_name": class_name,
-                "image_url": image_url
-            }).execute()
-            st.success("Fundstück gespeichert!")
+            if image_url:
+                try:
+                    response = supabase.table("clothes").insert({
+                        "class_name": class_name,
+                        "image_url": image_url
+                    }).execute(throw_on_error=True)
+                    st.success("Fundstück gespeichert!")
+                except Exception as e:
+                    st.error(f"Fehler beim Speichern in Supabase: {e}")
 
 # -----------------------
 # FUNDSTÜCK SUCHEN
@@ -107,15 +118,18 @@ elif option == "Fundstück suchen":
         class_name, confidence = predict(image)
         st.info(f"Erkannt als: {class_name}")
 
-        response = supabase.table("clothes") \
-            .select("image_url") \
-            .eq("class_name", class_name) \
-            .execute()
-        results = response.data
+        try:
+            response = supabase.table("clothes") \
+                .select("image_url") \
+                .eq("class_name", class_name) \
+                .execute(throw_on_error=True)
+            results = response.data
 
-        if results:
-            st.subheader("Mögliche Matches")
-            for item in results:
-                st.image(item["image_url"], width=200)
-        else:
-            st.warning("Keine passenden Einträge gefunden.")
+            if results:
+                st.subheader("Mögliche Matches")
+                for item in results:
+                    st.image(item["image_url"], width=200)
+            else:
+                st.warning("Keine passenden Einträge gefunden.")
+        except Exception as e:
+            st.error(f"Fehler beim Abrufen aus Supabase: {e}")
